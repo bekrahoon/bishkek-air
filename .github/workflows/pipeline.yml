@@ -80,14 +80,23 @@ jobs:
           git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" data-lake
 
       - name: Publish dashboard data
+        # The JSON files are fully regenerated each run, so we always lay them
+        # on top of the latest main instead of rebasing (no merge conflicts).
         run: |
           git config user.name "bishkek-air-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/data
-          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M') UTC"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          rm -rf /tmp/web-data && cp -r web/data /tmp/web-data
+          for attempt in 1 2 3; do
+            git fetch -q origin main
+            git checkout -q -B publish origin/main
+            rm -rf web/data && cp -r /tmp/web-data web/data
+            git add -A web/data
+            if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+            git commit -qm "data: refresh $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git push -q origin HEAD:main && exit 0
+            echo "main moved, retrying ($attempt)"; sleep 5
+          done
+          exit 1
 
       - name: Run summary
         if: always()
