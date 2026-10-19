@@ -52,7 +52,7 @@ jobs:
           fi
 
       - name: Extract
-        timeout-minutes: 20
+        timeout-minutes: 35
         run: python -m pipeline.run extract
 
       - name: Transform and test (dbt build)

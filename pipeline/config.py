@@ -22,7 +22,7 @@ BACKFILL_START = date.fromisoformat(os.environ.get("BACKFILL_START", "2023-01-01
 REFRESH_MONTHS = int(os.environ.get("REFRESH_MONTHS", "2"))
 
 # Wall-clock budget for one extract run. Backfill continues on the next run.
-EXTRACT_BUDGET_SECONDS = float(os.environ.get("EXTRACT_BUDGET_SECONDS", "720"))
+EXTRACT_BUDGET_SECONDS = float(os.environ.get("EXTRACT_BUDGET_SECONDS", "1500"))
 
 
 @dataclass(frozen=True)

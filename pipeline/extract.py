@@ -41,7 +41,7 @@ def http_get_json(url: str, params: dict, retries: int = 4) -> dict:
     limited = 0
     for attempt in range(1, retries + 1):
         try:
-            resp = requests.get(url, params=params, timeout=(10, 45))
+            resp = requests.get(url, params=params, timeout=(15, 120))  # big ranges are slow
         except requests.RequestException as exc:  # network blip or slow answer
             if attempt == retries:
                 raise SourceError(f"network: {exc}") from exc
