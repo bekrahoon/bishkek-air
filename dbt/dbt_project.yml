@@ -1,0 +1,35 @@
+name: bishkek_air
+version: "1.0.0"
+config-version: 2
+profile: bishkek_air
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  lake_dir: "{{ env_var('LAKE_DIR', '../data/lake') }}"
+  who_pm25_24h: 15      # WHO 2021 guideline, µg/m³, 24-hour mean
+  who_pm25_annual: 5    # WHO 2021 guideline, µg/m³, annual mean
+  who_pm10_24h: 45
+
+seeds:
+  bishkek_air:
+    cities:
+      +column_types:
+        utc_offset_hours: integer
+        latitude: double
+        longitude: double
+        is_focus: boolean
+
+models:
+  bishkek_air:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: table
+    marts:
+      +materialized: table

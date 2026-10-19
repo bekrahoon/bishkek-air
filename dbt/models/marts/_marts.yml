@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: fct_air_hourly
+    description: Observed hourly air quality joined with weather, with local time attributes.
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, ts_utc]}
+    columns:
+      - name: aqi_category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Good', 'Moderate', 'Unhealthy for sensitive groups', 'Unhealthy', 'Very unhealthy', 'Hazardous']
+      - name: hour_local
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 23}
+
+  - name: mart_city_daily
+    description: Daily PM2.5/PM10 per city with WHO 24h guideline flag.
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, date_local]}
+    columns:
+      - name: hours_observed
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 18, max_value: 25}
+
+  - name: mart_city_monthly
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, month]}
+
+  - name: mart_hourly_profile
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, month_local, hour_local]}
+
+  - name: mart_weather_effect
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [driver, city_id, bin]}
+
+  - name: mart_heating_seasons
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, season_start_year]}
+
+  - name: mart_forecast_daily
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, date_local]}
+
+  - name: mart_city_summary
+    description: Headline metrics per city for the dashboard.
+    columns:
+      - name: city_id
+        data_tests: [unique, not_null]

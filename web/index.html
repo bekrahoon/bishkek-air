@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bishkek Air</title>
+  <meta name="description" content="Hourly air quality for Bishkek and Central Asia since 2023 — an automated data pipeline with Python, DuckDB, dbt and GitHub Actions.">
+  <meta property="og:title" content="Bishkek Air — how clean is the air today?">
+  <meta property="og:description" content="Hourly PM2.5 for 8 Central Asian cities since 2023, refreshed automatically every 6 hours.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M0 26 L9 12 L14 19 L20 8 L32 26Z' fill='%231d2a33'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@300;400;500;650;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="demo-banner" class="demo-banner" hidden>Demo mode: these numbers are synthetic test data, not real measurements.</div>
+
+  <header class="hero" id="hero">
+    <svg class="sky" viewBox="0 0 1440 560" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" id="skyTop" stop-color="#9cc7dd"/>
+          <stop offset="1" id="skyBottom" stop-color="#e6f0f4"/>
+        </linearGradient>
+        <linearGradient id="hazeGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--haze)" stop-opacity=".55"/>
+          <stop offset=".55" stop-color="var(--haze)" stop-opacity=".95"/>
+          <stop offset="1" stop-color="var(--haze-deep)" stop-opacity="1"/>
+        </linearGradient>
+      </defs>
+      <rect width="1440" height="560" fill="url(#skyGrad)"/>
+      <!-- Ala-Too range: far snowy ridge, middle ridge, foothills -->
+      <path class="ridge far" d="M0 300 L90 250 L150 268 L230 196 L290 230 L360 170 L420 205 L470 182 L540 120 L600 168 L660 150 L720 92 L790 150 L850 132 L920 178 L990 140 L1060 186 L1120 150 L1190 200 L1260 166 L1330 214 L1400 190 L1440 210 L1440 560 L0 560Z"/>
+      <path class="snow" d="M520 140 L540 120 L560 136 L548 134 L540 142 L530 136Z M700 112 L720 92 L742 114 L728 110 L720 120 L710 110Z M970 152 L990 140 L1006 154 L994 152 L988 160Z M345 182 L360 170 L374 182 L362 180 L356 188Z"/>
+      <path class="ridge mid" d="M0 360 L120 300 L210 330 L320 270 L430 320 L520 280 L640 330 L760 268 L880 318 L1000 286 L1120 336 L1250 290 L1360 330 L1440 310 L1440 560 L0 560Z"/>
+      <path class="ridge near" d="M0 430 L160 392 L300 418 L470 380 L640 420 L820 392 L1000 428 L1180 396 L1330 424 L1440 410 L1440 560 L0 560Z"/>
+      <rect id="haze" class="haze" width="1440" height="560" fill="url(#hazeGrad)" opacity="0"/>
+      <path class="city" d="M0 530 L40 530 L40 515 L70 515 L70 524 L100 524 L100 508 L118 508 L118 500 L132 500 L132 508 L150 508 L150 521 L200 521 L200 511 L232 511 L232 526 L290 526 L290 517 L330 517 L330 504 L346 504 L346 517 L380 517 L380 527 L450 527 L450 514 L490 514 L490 523 L560 523 L560 509 L590 509 L590 495 L604 495 L604 509 L630 509 L630 525 L700 525 L700 515 L760 515 L760 506 L800 506 L800 522 L860 522 L860 513 L900 513 L900 527 L960 527 L960 510 L990 510 L990 519 L1050 519 L1050 502 L1072 502 L1072 519 L1120 519 L1120 528 L1180 528 L1180 515 L1230 515 L1230 524 L1300 524 L1300 511 L1340 511 L1340 525 L1440 525 L1440 560 L0 560Z"/>
+    </svg>
+
+    <div class="hero-inner">
+      <nav class="cities" id="cityTabs" aria-label="Choose a city"></nav>
+      <div class="now" aria-live="polite">
+        <h1 id="cityName">Bishkek</h1>
+        <p class="now-reading"><span id="pmNow" class="pm-now">—</span><span class="unit">µg/m³ PM2.5</span></p>
+        <p class="now-verdict" id="verdict">Loading the latest reading…</p>
+        <p class="now-meta" id="updated"></p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="block forecast-block" aria-labelledby="fcTitle">
+      <h2 id="fcTitle">Next days</h2>
+      <ol class="forecast" id="forecast"></ol>
+    </section>
+
+    <section class="block" aria-labelledby="calTitle">
+      <div class="block-head">
+        <h2 id="calTitle">Every day since 2023</h2>
+        <p class="lede">Each square is one day's average PM2.5. The WHO says a day should stay under 15&nbsp;µg/m³. Winters are where the city loses its air.</p>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="calendar" id="calendar"></div>
+      <p class="stat-line" id="calStats"></p>
+    </section>
+
+    <section class="block two-up">
+      <div>
+        <h2>When to open the window</h2>
+        <p class="lede">Typical PM2.5 by month and hour of day. Evening heating fires the worst hours; early afternoon is usually the cleanest.</p>
+        <div class="profile" id="profile"></div>
+      </div>
+      <div>
+        <h2>Colder air, dirtier air</h2>
+        <p class="lede">Average PM2.5 at each outdoor temperature. Below zero, homes burn more coal and still air traps the smoke.</p>
+        <div class="effect" id="effectTemp"></div>
+        <h3 class="sub">And wind clears it out</h3>
+        <div class="effect" id="effectWind"></div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="seasonTitle">
+      <div class="block-head">
+        <h2 id="seasonTitle">Is it getting better?</h2>
+        <p class="lede">Average PM2.5 over each heating season (November to March).</p>
+      </div>
+      <div class="seasons" id="seasons"></div>
+    </section>
+
+    <section class="block" aria-labelledby="rankTitle">
+      <div class="block-head">
+        <h2 id="rankTitle">Across the region, last 30 days</h2>
+        <p class="lede">Select a city to see its numbers above.</p>
+      </div>
+      <ol class="ranking" id="ranking"></ol>
+    </section>
+
+    <section class="block pipeline" aria-labelledby="pipeTitle">
+      <div class="block-head">
+        <h2 id="pipeTitle">How this page is built</h2>
+        <p class="lede">Nobody updates it by hand. A scheduled pipeline pulls fresh data every 6 hours, models and tests it, and publishes the result.</p>
+      </div>
+      <ol class="flow">
+        <li><strong>Extract</strong><span>Python pulls hourly air quality and weather for 8 cities from the Open-Meteo API, with retries and an idempotent monthly overwrite.</span></li>
+        <li><strong>Land</strong><span>Raw data is stored as Parquet files, partitioned by city and month, on a dedicated data branch.</span></li>
+        <li><strong>Transform</strong><span>dbt on DuckDB builds staging, intermediate and mart models from the lake.</span></li>
+        <li><strong>Test</strong><span>Data tests check keys, value ranges, relationships and freshness. A failed test stops the publish.</span></li>
+        <li><strong>Publish</strong><span>Marts are exported to JSON and committed; Vercel redeploys this page.</span></li>
+      </ol>
+      <dl class="status" id="status"></dl>
+      <p class="links"><a href="https://github.com/bekrahoon/bishkek-air" id="repoLink">Source code on GitHub</a></p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Data: <a href="https://open-meteo.com/">Open-Meteo</a> (CAMS global air-quality model, about 40&nbsp;km resolution). These are modelled values for each city, not readings from a single street sensor, so local peaks can be higher.</p>
+    <p>Built by <a href="https://www.linkedin.com/in/aba-bekrahoon-umurjanov-183b39352">Aba Bekrahoon Umurjanov</a>.</p>
+  </footer>
+
+  <div class="tip" id="tip" role="tooltip" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

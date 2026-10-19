@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: stg_air_quality
+    description: Hourly CAMS air-quality reanalysis/forecast per city (Open-Meteo), deduplicated.
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, ts_utc]}
+    columns:
+      - name: city_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('cities'), field: city_id}
+      - name: ts_utc
+        data_tests: [not_null]
+      - name: pm2_5
+        description: Fine particulate matter, µg/m³
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 1500}
+      - name: pm10
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 3000}
+      - name: us_aqi
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 1000}
+
+  - name: stg_weather
+    description: Hourly weather per city (Open-Meteo historical forecast API).
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, ts_utc]}
+    columns:
+      - name: temperature_c
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: -60, max_value: 60}
+      - name: humidity_pct
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 100}
+      - name: wind_kmh
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 250}
+
+  - name: stg_air_quality_forecast
+    description: Latest air-quality forecast snapshot (overwritten every run).
+    data_tests:
+      - unique_combination:
+              arguments: {columns: [city_id, ts_utc]}

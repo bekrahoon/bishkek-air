@@ -1,0 +1,9 @@
+city_id,city_name,country,latitude,longitude,utc_offset_hours,is_focus
+bishkek,Bishkek,Kyrgyzstan,42.8746,74.5698,6,true
+tokmok,Tokmok,Kyrgyzstan,42.8417,75.2900,6,true
+osh,Osh,Kyrgyzstan,40.5283,72.7985,6,true
+jalal_abad,Jalal-Abad,Kyrgyzstan,40.9333,73.0017,6,false
+karakol,Karakol,Kyrgyzstan,42.4907,78.3936,6,false
+naryn,Naryn,Kyrgyzstan,41.4287,75.9911,6,false
+almaty,Almaty,Kazakhstan,43.2389,76.8897,5,false
+tashkent,Tashkent,Uzbekistan,41.2995,69.2401,5,false
