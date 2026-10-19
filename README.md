@@ -1,6 +1,6 @@
 # Bishkek Air
 
-**Live dashboard: LIVE_URL**
+**Live dashboard: https://bishkek-air-web.vercel.app**
 
 Every winter Bishkek disappears under a layer of smog, and the mountains you can
 see from any street in summer vanish. This project tracks how bad it is, hour by

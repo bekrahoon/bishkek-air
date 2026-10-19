@@ -339,6 +339,7 @@ load()
   })
   .catch((err) => {
     console.error(err);
+    document.querySelector(".now-reading").hidden = true;
     $("verdict").textContent =
-      "No data yet. The pipeline publishes its first results a few minutes after the first scheduled run — refresh this page shortly.";
+      "The pipeline is collecting its first data. It publishes the results automatically — check back in a few minutes.";
   });

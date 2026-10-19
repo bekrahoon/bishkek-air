@@ -30,8 +30,9 @@ class SourceError(RuntimeError):
     """Raised when the API answers with a client error we should not retry."""
 
 
-def http_get_json(url: str, params: dict, retries: int = 5) -> dict:
-    """GET with exponential backoff on rate limits and server errors."""
+def http_get_json(url: str, params: dict, retries: int = 6) -> dict:
+    """GET with backoff. A 429 means the per-minute quota is used up, so we wait
+    for the window to reset instead of hammering the API."""
     delay = 2.0
     for attempt in range(1, retries + 1):
         try:
@@ -43,7 +44,11 @@ def http_get_json(url: str, params: dict, retries: int = 5) -> dict:
         else:
             if resp.status_code == 200:
                 return resp.json()
-            if resp.status_code in (429, 500, 502, 503, 504) and attempt < retries:
+            if resp.status_code == 429 and attempt < retries:
+                log.warning("rate limited, waiting 65 s (retry %s/%s)", attempt, retries)
+                time.sleep(65)
+                continue
+            if resp.status_code in (500, 502, 503, 504) and attempt < retries:
                 log.warning("HTTP %s from %s, retry %s/%s", resp.status_code, url, attempt, retries)
             else:
                 try:
@@ -170,6 +175,12 @@ def write_months(batch: Batch, source_name: str, city_id: str) -> dict[str, int]
 # Public entry points
 # ---------------------------------------------------------------------------
 
+def request_cost(source: Source, start: date, end: date) -> int:
+    """Open-Meteo counts a request as several calls: one per 10 variables per 14 days."""
+    days = (end - start).days + 1
+    return -(-len(source.variables) // 10) * -(-days // 14)
+
+
 def base_params(city: City, source: Source) -> dict:
     params = {
         "latitude": city.latitude,
@@ -212,7 +223,7 @@ def extract_history(
                 stats["rows"] += sum(written.values())
                 stats["months_written"] += len(written)
                 log.info("%s/%s %s..%s -> %s rows", source.name, city.city_id, start, end, sum(written.values()))
-                time.sleep(0.3)  # be polite to a free API
+                time.sleep(request_cost(source, start, end) * 0.12)  # stay under ~500 weighted calls/min
     return stats
 
 
