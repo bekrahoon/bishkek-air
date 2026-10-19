@@ -68,6 +68,10 @@ jobs:
           rm -rf /tmp/lake-repo && mkdir -p /tmp/lake-repo
           mkdir -p data/lake
           cp -r data/lake data/last_extract.json /tmp/lake-repo/
+          # Vercel builds every branch from the "web" root directory; this tells it
+          # to skip the data branch instead of failing on a missing folder.
+          mkdir -p /tmp/lake-repo/web
+          echo '{"git": {"deploymentEnabled": false}}' > /tmp/lake-repo/web/vercel.json
           cd /tmp/lake-repo
           git init -q -b data-lake
           git add -A
