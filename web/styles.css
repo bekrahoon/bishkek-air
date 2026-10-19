@@ -56,7 +56,12 @@ a:hover { text-decoration-thickness: 2px; }
   padding: 28px var(--gutter) 0;
   display: flex; flex-direction: column; gap: 6vh;
 }
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .cities { display: flex; flex-wrap: wrap; gap: 6px 4px; }
+.langs { display: flex; flex-shrink: 0; border: 1px solid rgba(29,42,51,.25); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.55); }
+.langs button { font: 650 .85rem var(--font); color: var(--ink); background: none; border: 0; padding: 7px 11px; cursor: pointer; }
+.langs button + button { border-left: 1px solid rgba(29,42,51,.18); }
+.langs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
 .cities button {
   font: 500 .95rem var(--font); color: var(--ink);
   background: rgba(255,255,255,.55); border: 1px solid rgba(29,42,51,.18);
@@ -164,6 +169,9 @@ h3.sub { font-size: 1.1rem; font-weight: 650; margin: 28px 0 8px; }
 }
 .empty { padding: 24px; background: var(--paper); border: 1px dashed var(--line); border-radius: 10px; color: var(--ink-soft); }
 
+@media (max-width: 600px) {
+  .topbar { flex-direction: column-reverse; }
+}
 @media (max-width: 900px) {
   .two-up { grid-template-columns: 1fr; gap: 40px; }
   .flow { grid-template-columns: 1fr; }

@@ -41,7 +41,7 @@ flowchart LR
 | Storage | Parquet (zstd), DuckDB | Raw lake partitioned by `source / city / month`; warehouse rebuilt each run |
 | Transform | dbt-core + dbt-duckdb | 12 models in staging → intermediate → marts layers |
 | Quality | dbt data tests, pytest | Uniqueness, ranges, relationships, freshness, completeness; unit tests for extract logic |
-| Serving | Static HTML/JS on Vercel | No framework, no chart library; every chart is hand-drawn SVG |
+| Serving | Static HTML/JS on Vercel | No framework, no chart library; hand-drawn SVG charts; English, Russian and Kyrgyz UI |
 
 ## Design decisions
 

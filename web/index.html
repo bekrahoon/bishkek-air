@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="demo-banner" class="demo-banner" hidden>Demo mode: these numbers are synthetic test data, not real measurements.</div>
+  <div id="demo-banner" class="demo-banner" data-i18n="demo_banner" hidden></div>
 
   <header class="hero" id="hero">
     <svg class="sky" viewBox="0 0 1440 560" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
@@ -48,11 +48,18 @@
     </svg>
 
     <div class="hero-inner">
-      <nav class="cities" id="cityTabs" aria-label="Choose a city"></nav>
+      <div class="topbar">
+        <nav class="cities" id="cityTabs" data-i18n-aria="choose_city" aria-label="Choose a city"></nav>
+        <div class="langs" id="langSwitch" role="group" data-i18n-aria="choose_lang" aria-label="Language">
+          <button type="button" data-lang="en" lang="en">EN</button>
+          <button type="button" data-lang="ru" lang="ru">RU</button>
+          <button type="button" data-lang="ky" lang="ky">KY</button>
+        </div>
+      </div>
       <div class="now" aria-live="polite">
         <h1 id="cityName">Bishkek</h1>
         <p class="now-reading"><span id="pmNow" class="pm-now">—</span><span class="unit">µg/m³ PM2.5</span></p>
-        <p class="now-verdict" id="verdict">Loading the latest reading…</p>
+        <p class="now-verdict" id="verdict" data-i18n="loading"></p>
         <p class="now-meta" id="updated"></p>
       </div>
     </div>
@@ -60,14 +67,14 @@
 
   <main>
     <section class="block forecast-block" aria-labelledby="fcTitle">
-      <h2 id="fcTitle">Next days</h2>
+      <h2 id="fcTitle" data-i18n="fc_title"></h2>
       <ol class="forecast" id="forecast"></ol>
     </section>
 
     <section class="block" aria-labelledby="calTitle">
       <div class="block-head">
-        <h2 id="calTitle">Every day on record</h2>
-        <p class="lede">Each square is one day's average PM2.5. The WHO says a day should stay under 15&nbsp;µg/m³. Winters are where the city loses its air.</p>
+        <h2 id="calTitle"></h2>
+        <p class="lede" data-i18n="cal_lede"></p>
       </div>
       <div class="legend" id="legend"></div>
       <div class="calendar" id="calendar"></div>
@@ -76,58 +83,59 @@
 
     <section class="block two-up">
       <div>
-        <h2>When to open the window</h2>
-        <p class="lede">Typical PM2.5 by month and hour of day. Evening heating fires the worst hours; early afternoon is usually the cleanest.</p>
+        <h2 data-i18n="profile_title"></h2>
+        <p class="lede" data-i18n="profile_lede"></p>
         <div class="profile" id="profile"></div>
       </div>
       <div>
-        <h2>Colder air, dirtier air</h2>
-        <p class="lede">Average PM2.5 at each outdoor temperature. Below zero, homes burn more coal and still air traps the smoke.</p>
+        <h2 data-i18n="temp_title"></h2>
+        <p class="lede" data-i18n="temp_lede"></p>
         <div class="effect" id="effectTemp"></div>
-        <h3 class="sub">And wind clears it out</h3>
+        <h3 class="sub" data-i18n="wind_title"></h3>
         <div class="effect" id="effectWind"></div>
       </div>
     </section>
 
     <section class="block" aria-labelledby="seasonTitle">
       <div class="block-head">
-        <h2 id="seasonTitle">Is it getting better?</h2>
-        <p class="lede">Average PM2.5 over each heating season (November to March).</p>
+        <h2 id="seasonTitle" data-i18n="season_title"></h2>
+        <p class="lede" data-i18n="season_lede"></p>
       </div>
       <div class="seasons" id="seasons"></div>
     </section>
 
     <section class="block" aria-labelledby="rankTitle">
       <div class="block-head">
-        <h2 id="rankTitle">Across the region, last 30 days</h2>
-        <p class="lede">Select a city to see its numbers above.</p>
+        <h2 id="rankTitle" data-i18n="rank_title"></h2>
+        <p class="lede" data-i18n="rank_lede"></p>
       </div>
       <ol class="ranking" id="ranking"></ol>
     </section>
 
     <section class="block pipeline" aria-labelledby="pipeTitle">
       <div class="block-head">
-        <h2 id="pipeTitle">How this page is built</h2>
-        <p class="lede">Nobody updates it by hand. A scheduled pipeline pulls fresh data every 6 hours, models and tests it, and publishes the result.</p>
+        <h2 id="pipeTitle" data-i18n="pipe_title"></h2>
+        <p class="lede" data-i18n="pipe_lede"></p>
       </div>
       <ol class="flow">
-        <li><strong>Extract</strong><span>Python pulls hourly air quality and weather for 8 cities from the Open-Meteo API, with retries and an idempotent monthly overwrite.</span></li>
-        <li><strong>Land</strong><span>Raw data is stored as Parquet files, partitioned by city and month, on a dedicated data branch.</span></li>
-        <li><strong>Transform</strong><span>dbt on DuckDB builds staging, intermediate and mart models from the lake.</span></li>
-        <li><strong>Test</strong><span>Data tests check keys, value ranges, relationships and freshness. A failed test stops the publish.</span></li>
-        <li><strong>Publish</strong><span>Marts are exported to JSON and committed; Vercel redeploys this page.</span></li>
+        <li><strong data-i18n="step1_t"></strong><span data-i18n="step1"></span></li>
+        <li><strong data-i18n="step2_t"></strong><span data-i18n="step2"></span></li>
+        <li><strong data-i18n="step3_t"></strong><span data-i18n="step3"></span></li>
+        <li><strong data-i18n="step4_t"></strong><span data-i18n="step4"></span></li>
+        <li><strong data-i18n="step5_t"></strong><span data-i18n="step5"></span></li>
       </ol>
       <dl class="status" id="status"></dl>
-      <p class="links"><a href="https://github.com/bekrahoon/bishkek-air" id="repoLink">Source code on GitHub</a></p>
+      <p class="links"><a href="https://github.com/bekrahoon/bishkek-air" id="repoLink" data-i18n="repo"></a></p>
     </section>
   </main>
 
   <footer class="foot">
-    <p>Data: <a href="https://open-meteo.com/">Open-Meteo</a> (CAMS global air-quality model, about 40&nbsp;km resolution). These are modelled values for each city, not readings from a single street sensor, so local peaks can be higher.</p>
-    <p>Built by <a href="https://www.linkedin.com/in/aba-bekrahoon-umurjanov-183b39352">Aba Bekrahoon Umurjanov</a>.</p>
+    <p data-i18n-html="foot_data"></p>
+    <p><span data-i18n="foot_by"></span> <a href="https://www.linkedin.com/in/aba-bekrahoon-umurjanov-183b39352">Aba Bekrahoon Umurjanov</a></p>
   </footer>
 
   <div class="tip" id="tip" role="tooltip" hidden></div>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
