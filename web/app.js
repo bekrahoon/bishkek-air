@@ -335,6 +335,7 @@ load()
     renderTabs();
     renderLegend();
     renderStatus();
+    $("calTitle").textContent = `Every day since ${longDate(D.meta.counts.first_day).replace(/^\d+ /, "")}`;
     selectCity(location.hash.slice(1) || "bishkek", { push: false });
   })
   .catch((err) => {

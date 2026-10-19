@@ -72,3 +72,36 @@ def test_api_errors_are_collected_not_fatal():
     stats = extract.extract_history([CITY], sources=[config.AIR_QUALITY], today=date(2025, 10, 1),
                                     http_get=failing)
     assert stats["rows"] == 0 and len(stats["errors"]) == 1
+
+
+def test_newest_months_are_fetched_first():
+    seen = []
+
+    def recording(url, params):
+        seen.append(params["start_date"])
+        return fake_http_get(url, params)
+
+    extract.extract_history([CITY], sources=[config.AIR_QUALITY], today=date(2026, 1, 15),
+                            http_get=recording)
+    assert seen == sorted(seen, reverse=True)
+
+
+def test_quota_exhaustion_stops_the_run_gracefully():
+    calls = []
+
+    def limited(url, params):
+        calls.append(params)
+        if len(calls) > 1:
+            raise extract.RateLimited("daily limit")
+        return fake_http_get(url, params)
+
+    stats = extract.extract_history([CITY], sources=[config.AIR_QUALITY], today=date(2026, 1, 15),
+                                    http_get=limited)
+    assert stats["stopped"].startswith("rate limited")
+    assert stats["rows"] > 0 and stats["pending_ranges"] >= 1
+
+
+def test_time_budget_leaves_work_for_next_run():
+    stats = extract.extract_history([CITY], sources=[config.AIR_QUALITY], today=date(2026, 1, 15),
+                                    http_get=fake_http_get, budget_seconds=-1)
+    assert stats["stopped"] == "time budget" and stats["calls"] == 0

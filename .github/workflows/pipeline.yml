@@ -52,6 +52,7 @@ jobs:
           fi
 
       - name: Extract
+        timeout-minutes: 20
         run: python -m pipeline.run extract
 
       - name: Transform and test (dbt build)
@@ -61,8 +62,11 @@ jobs:
         run: python -m pipeline.run export
 
       - name: Save the lake (single-commit branch, no history bloat)
+        # Runs even if a later step failed, so backfill progress is never lost.
+        if: always() && hashFiles('data/last_extract.json') != ''
         run: |
           rm -rf /tmp/lake-repo && mkdir -p /tmp/lake-repo
+          mkdir -p data/lake
           cp -r data/lake data/last_extract.json /tmp/lake-repo/
           cd /tmp/lake-repo
           git init -q -b data-lake

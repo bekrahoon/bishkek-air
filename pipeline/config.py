@@ -21,6 +21,9 @@ BACKFILL_START = date.fromisoformat(os.environ.get("BACKFILL_START", "2023-01-01
 # recent values, so we overwrite the trailing window (idempotent by design).
 REFRESH_MONTHS = int(os.environ.get("REFRESH_MONTHS", "2"))
 
+# Wall-clock budget for one extract run. Backfill continues on the next run.
+EXTRACT_BUDGET_SECONDS = float(os.environ.get("EXTRACT_BUDGET_SECONDS", "720"))
+
 
 @dataclass(frozen=True)
 class Source:

@@ -30,23 +30,31 @@ class SourceError(RuntimeError):
     """Raised when the API answers with a client error we should not retry."""
 
 
-def http_get_json(url: str, params: dict, retries: int = 6) -> dict:
-    """GET with backoff. A 429 means the per-minute quota is used up, so we wait
-    for the window to reset instead of hammering the API."""
+class RateLimited(RuntimeError):
+    """The API keeps refusing us (hourly/daily quota): stop extracting for this run."""
+
+
+def http_get_json(url: str, params: dict, retries: int = 4) -> dict:
+    """GET with backoff. One 429 is usually the per-minute window, so we wait it
+    out once; repeated 429s mean a longer quota and we give up for this run."""
     delay = 2.0
+    limited = 0
     for attempt in range(1, retries + 1):
         try:
-            resp = requests.get(url, params=params, timeout=60)
-        except requests.RequestException as exc:  # network blip
+            resp = requests.get(url, params=params, timeout=(10, 45))
+        except requests.RequestException as exc:  # network blip or slow answer
             if attempt == retries:
-                raise
+                raise SourceError(f"network: {exc}") from exc
             log.warning("network error %s, retry %s/%s", exc, attempt, retries)
         else:
             if resp.status_code == 200:
                 return resp.json()
-            if resp.status_code == 429 and attempt < retries:
-                log.warning("rate limited, waiting 65 s (retry %s/%s)", attempt, retries)
-                time.sleep(65)
+            if resp.status_code == 429:
+                limited += 1
+                if limited >= 2:
+                    raise RateLimited(resp.text[:200])
+                log.warning("rate limited, waiting 61 s")
+                time.sleep(61)
                 continue
             if resp.status_code in (500, 502, 503, 504) and attempt < retries:
                 log.warning("HTTP %s from %s, retry %s/%s", resp.status_code, url, attempt, retries)
@@ -55,10 +63,10 @@ def http_get_json(url: str, params: dict, retries: int = 6) -> dict:
                     reason = resp.json().get("reason", resp.text)
                 except ValueError:
                     reason = resp.text
-                raise SourceError(f"HTTP {resp.status_code}: {reason}")
+                raise SourceError(f"HTTP {resp.status_code}: {reason[:200]}")
         time.sleep(delay)
         delay *= 2
-    raise RuntimeError("unreachable")
+    raise SourceError("retries exhausted")
 
 
 # ---------------------------------------------------------------------------
@@ -197,33 +205,55 @@ def extract_history(
     sources: Iterable[Source] = config.HISTORY_SOURCES,
     today: date | None = None,
     http_get: HttpGet = http_get_json,
+    budget_seconds: float | None = None,
 ) -> dict:
-    today = today or datetime.now(timezone.utc).date()
-    ingested_at = datetime.now(timezone.utc).replace(microsecond=0)
-    stats = {"calls": 0, "rows": 0, "months_written": 0, "errors": []}
+    """Fetch missing and stale months, newest first.
 
+    Work is ordered so the most recent quarter of every city lands before any
+    older history. A run stops when the time budget is spent or the API quota
+    runs out; the next scheduled run continues where this one stopped.
+    """
+    today = today or datetime.now(timezone.utc).date()
+    budget = config.EXTRACT_BUDGET_SECONDS if budget_seconds is None else budget_seconds
+    deadline = time.monotonic() + budget
+    ingested_at = datetime.now(timezone.utc).replace(microsecond=0)
+    stats = {"calls": 0, "rows": 0, "months_written": 0, "pending_ranges": 0,
+             "stopped": None, "errors": []}
+
+    tasks = []
     for source in sources:
         for city in cities:
-            for start, end in group_contiguous(months_to_fetch(source.name, city.city_id, today)):
-                end = min(end, today)
-                params = base_params(city, source) | {
-                    "start_date": start.isoformat(),
-                    "end_date": end.isoformat(),
-                }
-                try:
-                    payload = http_get(source.url, params)
-                    stats["calls"] += 1
-                    batch = parse_hourly(payload, source, city.city_id, ingested_at)
-                except SourceError as exc:
-                    msg = f"{source.name}/{city.city_id} {start}..{end}: {exc}"
-                    log.error(msg)
-                    stats["errors"].append(msg)
-                    continue
-                written = write_months(batch, source.name, city.city_id)
-                stats["rows"] += sum(written.values())
-                stats["months_written"] += len(written)
-                log.info("%s/%s %s..%s -> %s rows", source.name, city.city_id, start, end, sum(written.values()))
-                time.sleep(request_cost(source, start, end) * 0.12)  # stay under ~500 weighted calls/min
+            for start, end in group_contiguous(months_to_fetch(source.name, city.city_id, today), max_len=3):
+                tasks.append((end, source, city, start))
+    tasks.sort(key=lambda t: (-t[0].toordinal(), t[1].name, t[2].city_id))
+
+    for i, (end, source, city, start) in enumerate(tasks):
+        if time.monotonic() > deadline:
+            stats["stopped"] = "time budget"
+            stats["pending_ranges"] = len(tasks) - i
+            break
+        end = min(end, today)
+        params = base_params(city, source) | {"start_date": start.isoformat(), "end_date": end.isoformat()}
+        try:
+            payload = http_get(source.url, params)
+            stats["calls"] += 1
+            batch = parse_hourly(payload, source, city.city_id, ingested_at)
+        except RateLimited as exc:
+            stats["stopped"] = f"rate limited: {exc}"
+            stats["pending_ranges"] = len(tasks) - i
+            log.error("API quota exhausted, stopping extract for this run")
+            break
+        except SourceError as exc:
+            msg = f"{source.name}/{city.city_id} {start}..{end}: {exc}"
+            log.error(msg)
+            stats["errors"].append(msg)
+            continue
+        written = write_months(batch, source.name, city.city_id)
+        stats["rows"] += sum(written.values())
+        stats["months_written"] += len(written)
+        print(f"[{i + 1}/{len(tasks)}] {source.name}/{city.city_id} {start}..{end} -> "
+              f"{sum(written.values())} rows", flush=True)
+        time.sleep(request_cost(source, start, end) * 0.15)  # stay well under 600 weighted calls/min
     return stats
 
 
@@ -237,7 +267,7 @@ def extract_forecast(cities: list[City], http_get: HttpGet = http_get_json, days
             payload = http_get(config.AIR_QUALITY.url, params)
             stats["calls"] += 1
             batch = parse_hourly(payload, config.AIR_QUALITY, city.city_id, ingested_at)
-        except SourceError as exc:
+        except (SourceError, RateLimited) as exc:
             stats["errors"].append(f"forecast/{city.city_id}: {exc}")
             continue
         path = config.LAKE_DIR / "air_quality_forecast" / f"city_id={city.city_id}" / "latest.parquet"
