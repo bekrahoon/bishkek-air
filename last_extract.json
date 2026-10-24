@@ -1,0 +1,21 @@
+{
+  "started_at": "2026-10-24T11:00:34+00:00",
+  "finished_at": "2026-10-24T11:04:20+00:00",
+  "synthetic": false,
+  "history": {
+    "calls": 14,
+    "rows": 18144,
+    "months_written": 28,
+    "pending_ranges": 0,
+    "stopped": null,
+    "errors": [
+      "air_quality/osh 2026-09-01..2026-10-24: network: HTTPSConnectionPool(host='air-quality-api.open-meteo.com', port=443): Read timed out. (read timeout=15)",
+      "weather/tashkent 2026-09-01..2026-10-24: network: HTTPSConnectionPool(host='historical-forecast-api.open-meteo.com', port=443): Read timed out. (read timeout=15)"
+    ]
+  },
+  "forecast": {
+    "calls": 8,
+    "rows": 1152,
+    "errors": []
+  }
+}
