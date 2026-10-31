@@ -1,0 +1,21 @@
+{
+  "started_at": "2026-10-31T12:29:02+00:00",
+  "finished_at": "2026-10-31T12:32:49+00:00",
+  "synthetic": false,
+  "history": {
+    "calls": 14,
+    "rows": 20496,
+    "months_written": 28,
+    "pending_ranges": 0,
+    "stopped": null,
+    "errors": [
+      "air_quality/osh 2026-09-01..2026-10-31: network: HTTPSConnectionPool(host='air-quality-api.open-meteo.com', port=443): Read timed out. (read timeout=15)",
+      "weather/osh 2026-09-01..2026-10-31: network: HTTPSConnectionPool(host='historical-forecast-api.open-meteo.com', port=443): Read timed out. (read timeout=15)"
+    ]
+  },
+  "forecast": {
+    "calls": 8,
+    "rows": 1152,
+    "errors": []
+  }
+}
