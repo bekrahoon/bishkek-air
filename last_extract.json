@@ -1,0 +1,21 @@
+{
+  "started_at": "2026-11-14T06:22:11+00:00",
+  "finished_at": "2026-11-14T06:24:57+00:00",
+  "synthetic": false,
+  "history": {
+    "calls": 14,
+    "rows": 15120,
+    "months_written": 28,
+    "pending_ranges": 0,
+    "stopped": null,
+    "errors": [
+      "air_quality/tokmok 2026-10-01..2026-11-14: network: HTTPSConnectionPool(host='air-quality-api.open-meteo.com', port=443): Read timed out. (read timeout=15)",
+      "weather/tokmok 2026-10-01..2026-11-14: network: HTTPSConnectionPool(host='historical-forecast-api.open-meteo.com', port=443): Read timed out. (read timeout=15)"
+    ]
+  },
+  "forecast": {
+    "calls": 8,
+    "rows": 1152,
+    "errors": []
+  }
+}
