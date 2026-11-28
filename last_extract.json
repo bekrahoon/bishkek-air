@@ -1,0 +1,18 @@
+{
+  "started_at": "2026-11-28T20:01:41+00:00",
+  "finished_at": "2026-11-28T20:03:23+00:00",
+  "synthetic": false,
+  "history": {
+    "calls": 16,
+    "rows": 22656,
+    "months_written": 32,
+    "pending_ranges": 0,
+    "stopped": null,
+    "errors": []
+  },
+  "forecast": {
+    "calls": 8,
+    "rows": 1152,
+    "errors": []
+  }
+}
